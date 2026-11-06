@@ -2,6 +2,7 @@
 Same ideas as the real services, with a smaller API. You don't need to change this file."""
 
 import copy
+import time
 
 
 class ConditionalCheckFailed(Exception):
@@ -33,16 +34,26 @@ class Table:
 
 
 class Cache:
-    """Like Redis GET, SET and DEL."""
+    """Like Redis GET, SET (with optional EX seconds) and DEL."""
 
     def __init__(self):
         self._values = {}
+        self._expires_at = {}
 
     def get(self, key):
+        expires_at = self._expires_at.get(key)
+        if expires_at is not None and time.time() >= expires_at:
+            self.delete(key)
         return self._values.get(key)
 
-    def set(self, key, value):
+    def set(self, key, value, ex=None):
+        """ex: seconds until the key expires, like redis-py's set(key, value, ex=...)."""
         self._values[key] = value
+        if ex is None:
+            self._expires_at.pop(key, None)
+        else:
+            self._expires_at[key] = time.time() + ex
 
     def delete(self, key):
         self._values.pop(key, None)
+        self._expires_at.pop(key, None)
