@@ -1,0 +1,9 @@
+services:
+  check:
+    image: python:3.12.7-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: python check.py
